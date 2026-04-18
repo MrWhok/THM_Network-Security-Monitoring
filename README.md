@@ -3,6 +3,7 @@
 ## Table of Contents
 1. [Network Security Essentials](#network-security-essentials)
 2. [Network Discovery Detection](#network-discovery-detection)
+3. [Data Exfiltration Detection](#data-exfiltration-detection)
 
 ## Network Security Essentials
 ### Network Perimeters: Monitoring and Protecting
@@ -166,3 +167,94 @@
     network.protocol: "UDP"
     ```
     We will find `UDP` result but the destination ip is `239.255.255.250` which is a multicast address used for service discovery and not indicative of a scanning attempt. Therefore, the answer is `N`.
+
+
+## Data Exfiltration Detection
+### Data Exfil: Overview, techniques, and indicators
+1. Exfiltrating the data through HTTP comes under which technique?
+
+    The answer is `Network-based`.
+
+### Detection: Data Exfil through DNS Tunneling
+1. What is the suspicious domain receiving the DNS traffic?
+
+    To solve this, we can use this filter to find long DNS queries that are indicative of DNS tunneling:
+
+    ```txt
+    index="data_exfil" sourcetype="DNS_logs" | where len(query) > 30
+    ```
+    Then, we can check the `query` field to find the suspicious domain receiving the DNS traffic. The answer is `tunnelcorp.net`.
+
+2. How many suspicious traffic/logs related to dns tunneling were observed?
+
+    We can use this filter to only show `tunnelcorp.net` queries:
+
+    ```txt
+    index=data_exfil sourcetype="DNS_logs" | search query="*.tunnelcorp.net" | sort -count
+    ```
+    The answer is `315`.
+
+3. Which local IP sent the maximum number of suspicious requests?
+
+    We can use previous filter and check the `src_ip` field to find the local IP that sent the maximum number of suspicious requests. The answer is `192.168.1.103`.
+
+### Detection: Data Exfil through FTP
+1. How many connections were observed from the guest account?
+
+    We can filter for FTP connections from the guest account:
+
+    ```txt
+    (ftp.request.command == "USER" || ftp.request.command == "PASS") and ftp contains "USER root"
+    ```
+    The answer is `5` connections.
+
+2. Apply the filter; what is the name of the customer-related file exfiltrated from the root account?
+
+    We can filter for FTP connections from the root account:
+
+    ```txt
+    (ftp.request.command == "USER" || ftp.request.command == "PASS") and ftp contains "USER root"
+    ```
+    Then, we can check the each of the result by right click and select `Follow > FTP Stream` to find the name of the customer-related file exfiltrated from the root account. The answer is `customer_data.xlsx`.
+
+3. Which internal IP was found to be sending the largest payload to an external IP?
+
+    We can filter for ftp that have a large payload size:
+
+    ```txt
+    ftp && frame.len > 90
+    ```
+    Then, we can sort based on the length. The answer is `192.168.1.105`.
+
+4. What is the flag hidden inside the ftp stream transferring the CSV file to the suspicious IP?
+
+    We can filter based on the `csv` extension:
+
+    ```txt
+    ftp contains "csv"
+    ```
+    The answer is `THM{ftp_exfil_hidden_flag}`.
+
+### Detection: Data Exfil via HTTP
+1. Which internal compromised host was used to exfiltrate this sensitive data?
+
+    We can filter for HTTP POST requests that have a large payload size:
+
+    ```txt
+    http.request.method == "POST" and frame.len > 750
+    ```
+    Then, we can check the `src_ip` field to find the internal compromised host that was used to exfiltrate this sensitive data. The answer is `192.168.1.103`.
+
+2. What's the flag hidden inside the exfiltrated data?
+
+    We can right click on the result of the previous filter and select `Follow > HTTP Stream` to find the flag hidden inside the exfiltrated data. The answer is `THM{http_raw_3xf1ltr4t10n_succ3ss}`.
+
+### Detection: Data Exfil via ICMP
+1. What is the flag found in the exfiltrated data through ICMP?
+
+    We can filter for ICMP request packets that have a large payload size:
+
+    ```txt
+    icmp.type == 8 and frame.len > 100
+    ```
+    The answer is `THM{1cmp_3ch0_3xf1ltr4t10n_succ3ss}`.
