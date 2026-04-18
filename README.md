@@ -4,6 +4,7 @@
 1. [Network Security Essentials](#network-security-essentials)
 2. [Network Discovery Detection](#network-discovery-detection)
 3. [Data Exfiltration Detection](#data-exfiltration-detection)
+4. [Man-in-the-Middle Detection](#man-in-the-middle-detection)
 
 ## Network Security Essentials
 ### Network Perimeters: Monitoring and Protecting
@@ -258,3 +259,102 @@
     icmp.type == 8 and frame.len > 100
     ```
     The answer is `THM{1cmp_3ch0_3xf1ltr4t10n_succ3ss}`.
+
+
+## Man-in-the-Middle Detection
+### Detecting ARP Spoofing
+1. How many ARP packets from the gateway MAC Address were observed?
+
+    First we need to filter for ARP response packets:
+
+    ```txt
+    arp.opcode == 2
+    ```
+    The gateway IP, usually end with `.1`, is `192.168.10.1` with mac address `02:aa:bb:cc:00:01`. Then, we can filter for ARP  from the gateway MAC address:
+
+    ```txt
+    eth.src == 02:aa:bb:cc:00:01
+    ```
+    The answer is `10` ARP packets.
+
+2. What MAC address was used by the attacker to impersonate the gateway?
+
+    The attacker will broadcast that the gateway IP address is associated with their own MAC address. So, we need to filter for ARP packets that claim to be from the gateway IP address but have a different MAC address:
+
+    ```txt
+    arp.opcode == 2 && arp.src.proto_ipv4 == 192.168.10.1
+    ```
+    We will find two different MAC addresses claiming to be the gateway. The answer is `02:fe:fe:fe:55:55`.
+
+3. How many Gratuitous ARP replies were observed for 192.168.10.1?
+
+    We can filter for Gratuitous ARP replies that claim to be from the gateway IP address:
+
+    ```txt
+    arp.isgratuitous && arp.opcode == 2 && arp.src.proto_ipv4 == 192.168.10.1
+    ```
+    The answer is `2` Gratuitous ARP replies.
+
+4. How many unique MAC addresses claimed the same IP (192.168.10.1)?
+
+    We can filter for ARP packets that claim to be from the gateway IP address and then count the unique MAC addresses:
+
+    ```txt
+    arp.opcode ==2 && _ws.col.info contains "192.168.10.1 is at"
+    ```
+    The answer is `2` unique MAC addresses.
+
+5. How many ARP spoofing packets were observed in total from the attacker?
+
+    We can filter for ARP packets that claim to be from the gateway IP address but have the attacker's MAC address:
+
+    ```txt
+    arp.opcode == 2 && arp.src.proto_ipv4 == 192.168.10.1 && eth.src == 02:fe:fe:fe:55:55
+    ```
+    The answer is `14` ARP spoofing packets.
+
+### Unmasking DNS Spoofing
+1. How many DNS responses were observed for the domain corp-login.acme-corp.local?
+
+    We can filter for DNS response packets that contain the domain `corp-login.acme-corp.local`:
+
+    ```txt
+    dns.flags.response == 1 && dns.qry.name == "corp-login.acme-corp.local"
+    ```
+    The answer is `211` DNS responses.
+
+2. How many DNS requests were observed from the IPs other than 8.8.8.8?
+
+    We can filter DNS response that doesntt come from `8.8.8.8`:
+    
+    ```txt
+    dns.flags.response == 1 && ! (ip.src == 8.8.8.8)
+    ```
+
+3. What IP did the attacker’s forged DNS response return for the domain?
+
+    Based on the previous questions the interisting domain is `corp-login.acme-corp.local`. We must make sure that the DNS response is coming from `8.8.8.8`:
+
+    ```txt
+    dns.flags.response == 1 && ip.src == 8.8.8.8 && dns.qry.name == "corp-login.acme-corp.local"
+    ```
+    Oke it valid. Now we need to filter for DNS response that doesntt come from `8.8.8.8` with the same domain:
+
+    ```txt
+    dns.flags.response == 1 && ip.src != 8.8.8.8 && dns.qry.name == "corp-login.acme-corp.local"
+    ```
+    The answer is `192.168.10.55`.
+
+### Spotting SSL Stripping in Action
+1. How many POST requests were observed for our domain corp-login.acme-corp.local?
+
+    In the previous, we already know the attacker's IP address is `192.168.10.55`. We can verify tls disappears from victim to the attacker's IP address:
+
+    ```txt
+    http && ip.src == 192.168.10.10 && ip.dst == 192.168.10.55
+    ```
+    The answer is `1`.
+
+2. What's the password of the victim found in the plaintext after successful ssl stripping attack. 
+
+    We can right click on the result of the previous filter and select `Follow > HTTP Stream` to find the password of the victim found in the plaintext after successful ssl stripping attack. The answer is `Secret123!`.
