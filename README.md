@@ -5,6 +5,7 @@
 2. [Network Discovery Detection](#network-discovery-detection)
 3. [Data Exfiltration Detection](#data-exfiltration-detection)
 4. [Man-in-the-Middle Detection](#man-in-the-middle-detection)
+5. [IDS Fundamentals](#ids-fundamentals)
 
 ## Network Security Essentials
 ### Network Perimeters: Monitoring and Protecting
@@ -358,3 +359,63 @@
 2. What's the password of the victim found in the plaintext after successful ssl stripping attack. 
 
     We can right click on the result of the previous filter and select `Follow > HTTP Stream` to find the password of the victim found in the plaintext after successful ssl stripping attack. The answer is `Secret123!`.
+
+
+## IDS Fundamentals
+### What is an IDS?
+1. Can an intrusion detection system (IDS) prevent the threat after it detects it? Yea/Nay
+
+    The answer is `Nay`. An IDS is designed to detect and alert on potential security incidents, but it does not have the capability to prevent or block the threat.
+
+### Types of IDS
+1. Which type of IDS is deployed to detect threats throughout the network?
+
+    The answer is `Network Intrusion Detection System`. A Network-based IDS is deployed to monitor and analyze network traffic for signs of malicious activity or policy violations across the entire network.
+
+2. Which IDS leverages both signature-based and anomaly-based detection techniques?
+
+    The answer is `Hybrid IDS`. A Hybrid IDS combines both signature-based and anomaly-based detection techniques to provide a more comprehensive approach to threat detection.
+
+### IDS Example: Snort
+1. Which mode of Snort helps us to log the network traffic in a PCAP file?
+
+    The answer is `Packet Logging Mode`. 
+
+2. What is the primary mode of Snort called?
+
+    The answer is `Network Intrusion Detection System Mode`.
+
+### Snort Usage
+1. Where is the main directory of Snort that stores its files?
+
+    The main directory of Snort that stores its files is typically located at `/etc/snort`.
+
+2. Which field in the Snort rule indicates the revision number of the rule?
+
+    The field in the Snort rule that indicates the revision number of the rule is `rev`.
+
+3. Which protocol is defined in the sample rule created in the task?
+
+    The protocol defined in the sample rule created in the task is `icmp`.
+
+4. What is the file name that contains custom rules for Snort?
+
+    The file name that contains custom rules for Snort is typically `local.rules`.
+
+### Practice Lab
+1. What is the IP address of the machine that tried to connect to the subject machine using SSH?
+
+    We can run snort to analayze pcap file by using this command:
+    
+    ```bash
+    sudo snort -q -l /var/log/snort -r Intro_to_IDS.pcap -A console -c /etc/snort/snort.conf
+    ```
+    Then, we can check the output for any SSH connection attempts. The answer is `10.11.90.211`.
+
+2. What other rule message besides the SSH message is detected in the PCAP file? 
+
+    The answer is `Ping Detected`.
+
+3. What is the sid of the rule that detects SSH?
+
+    The answer is `1000002`.
