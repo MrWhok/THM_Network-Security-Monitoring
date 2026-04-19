@@ -6,6 +6,7 @@
 3. [Data Exfiltration Detection](#data-exfiltration-detection)
 4. [Man-in-the-Middle Detection](#man-in-the-middle-detection)
 5. [IDS Fundamentals](#ids-fundamentals)
+6. [Snort](#snort)
 
 ## Network Security Essentials
 ### Network Perimeters: Monitoring and Protecting
@@ -419,3 +420,247 @@
 3. What is the sid of the rule that detects SSH?
 
     The answer is `1000002`.
+
+## Snort
+### Interactive Material and VM
+1. Navigate to the Task-Exercises folder and run the command "./.easy.sh" and write the output
+
+    The answer is `Too Easy!`.
+
+### Introduction to IDS/IPS
+1. Which IDS or IPS type can help you stop the threats on a local machine?
+
+    The answer is `HIPS`.
+
+2. Which IDS or IPS type can help you detect threats on a local network?
+
+    The answer is `NIDS`.
+
+3. Which IDS or IPS type can help you detect the threats on a local machine?
+
+    The answer is `HIDS`.
+
+4. Which IDS or IPS type can help you stop the threats on a local network?
+
+    The answer is `NIPS`.
+
+5. Which described solution works by detecting anomalies in the network?
+
+    The answer is `NBA`. NBA stands for Network Behavior Analysis, which is a technique used in intrusion detection systems to identify unusual patterns of network traffic that may indicate a security threat.
+
+6. According to the official description of the snort, what kind of NIPS is it?
+
+    The answer is `full-blown`.
+
+7. NBA training period is also known as ...
+
+    The answer is `baselining`.
+
+### First Interaction with Snort
+1. Run the Snort instance and check the build number.
+
+    We can use this command to check the build number of Snort:
+
+    ```bash
+    snort -V
+    ```
+    The answer is `149`.
+
+2. Test the current instance with "/etc/snort/snort.conf" file and check how many rules are loaded with the current build.
+
+    We can use this command to test the current instance of Snort with the configuration file and check how many rules are loaded:
+
+    ```bash
+    sudo snort -c /etc/snort/snort.conf -T
+    ```
+    The answer is `4151`.
+
+3. Test the current instance with "/etc/snort/snortv2.conf" file and check how many rules are loaded with the current build.
+
+    We can use this command to test the current instance of Snort with the new configuration file and check how many rules are loaded:
+
+    ```bash
+    sudo snort -c /etc/snort/snortv2.conf -T
+    ```
+    The answer is `1`.
+
+### Operation Mode 2: Packet Logger Mode
+1. Investigate the traffic with the default configuration file with ASCII mode. sudo snort -dev -K ASCII -l .. Execute the traffic generator script and choose "TASK-6 Exercise". Wait until the traffic ends, then stop the Snort instance. Now analyse the output summary and answer the question. sudo ./traffic-generator.sh. Now, you should have the logs in the current directory. Navigate to folder "145.254.160.237". What is the source port used to connect port 53?
+
+    To solve this challenge, we can run snort in packet logger mode with ASCII output:
+
+    ```bash
+    sudo snort -dev -K ASCII -l .
+    ```
+    Then, we can execute the traffic generator script and choose "TASK-6 Exercise":
+
+    ```bash
+    sudo ./traffic-generator.sh
+    ```
+    After the traffic ends, we can modify the permissions of the output directory to allow us to read the logs:
+
+    ```bash
+    sudo chown ubuntu -R 145.254.160.237
+    ```
+    Then, we can navigate to the folder `145.254.160.237` and read `UDP:3009-53`. The source port used to connect to port 53 is `3009`.
+
+2. Use snort.log.1640048004. Read the snort.log file with Snort; what is the IP ID of the 10th packet? snort -r snort.log.1640048004 -n 10
+
+    To solve this challenge, we can read the snort.log file with Snort and specify to read only the first 10 packets:
+
+    ```bash
+    snort -r snort.log.1640048004 -n 10
+    ```
+    Then, we can check the output for the IP ID of the 10th packet. The answer is `49313`.
+
+3. Read the "snort.log.1640048004" file with Snort; what is the referer of the 4th packet?
+
+    We can read the snort.log file with Snort and specify to read only the first 4 packets:
+
+    ```bash
+    snort -dvr snort.log.1640048004 -n 4
+    ```
+    Then, we can check the output for the referer of the 4th packet. The answer is `http://www.ethereal.com/development.html`.
+
+4. Read the "snort.log.1640048004" file with Snort; what is the Ack number of the 8th packet?
+
+    We can read the snort.log file with Snort and specify to read only the first 8 packets:
+
+    ```bash
+    snort -r snort.log.1640048004 -n 8
+    ```
+    Then, we can check the output for the Ack number of the 8th packet. The answer is `0x38AFFFF3`.
+
+5. Read the "snort.log.1640048004" file with Snort; what is the number of the "TCP port 80" packets?
+
+    We can read the snort.log file with Snort and filter for packets that contain "TCP port 80":
+
+    ```bash
+    snort -r snort.log.1640048004 'tcp and port 80' 
+    ```
+    Then we can check the total output, in the end of the output. The answer is `41`.
+
+### Operation Mode 3: IDS/IPS
+1. Investigate the traffic with the default configuration file. `sudo snort -c /etc/snort/snort.conf -A full -l .`. Execute the traffic generator script and choose "TASK-7 Exercise". Wait until the traffic stops, then stop the Snort instance. Now analyse the output summary and answer the question. `sudo ./traffic-generator.sh`. What is the number of the detected HTTP GET methods?
+
+    To solve this challenge, we can run snort in IDS mode with full alert output:
+
+    ```bash
+    sudo snort -c /etc/snort/snort.conf -A full -l .
+    ```
+    Then, we can execute the traffic generator script and choose "TASK-7 Exercise":
+
+    ```bash
+    sudo ./traffic-generator.sh
+    ```
+    After the traffic stops, we can check the output summary for the number of detected HTTP GET methods. The answer is `2`.
+
+### Operation Mode 4: PCAP Investigation
+1. Investigate the mx-1.pcap file with the default configuration file. `sudo snort -c /etc/snort/snort.conf -A full -l . -r mx-1.pcap`. What is the number of the generated alerts?
+
+    To solve this challenge, we can investigate the `mx-1.pcap` file with Snort using the default configuration file:
+
+    ```bash
+    sudo snort -c /etc/snort/snort.conf -A full -l . -r mx-1.pcap
+    ```
+    Then, we can check the output summary for the number of generated alerts. The answer is `170`.
+
+2. Keep reading the output. How many TCP Segments are Queued?
+
+    We can check the output for the number of TCP Segments that are Queued. The answer is `18`.
+
+3. Keep reading the output. How many "HTTP response headers" were extracted?
+
+    We can check the output for the number of "HTTP response headers" that were extracted. The answer is `3`.
+
+4. Investigate the mx-1.pcap file with the second configuration file. `sudo snort -c /etc/snort/snortv2.conf -A full -l . -r mx-1.pcap`. What is the number of the generated alerts?
+
+    To solve this challenge, we can investigate the `mx-1.pcap` file with Snort using the second configuration file:
+
+    ```bash
+    sudo snort -c /etc/snort/snortv2.conf -A full -l . -r mx-1.pcap
+    ```
+    Then, we can check the output summary for the number of generated alerts. The answer is `68`.
+
+5. Investigate the mx-2.pcap file with the default configuration file. `sudo snort -c /etc/snort/snort.conf -A full -l . -r mx-2.pcap`. What is the number of the generated alerts?
+
+    To solve this challenge, we can investigate the `mx-2.pcap` file with Snort using the default configuration file:
+
+    ```bash
+    sudo snort -c /etc/snort/snort.conf -A full -l . -r mx-2.pcap
+    ```
+    Then, we can check the output summary for the number of generated alerts. The answer is `340`.
+
+6. Keep reading the output. What is the number of the detected TCP packets?
+
+    We can check the output for the number of detected TCP packets. The answer is `82`.
+
+7. Investigate the mx-2.pcap and mx-3.pcap files with the default configuration file. `sudo snort -c /etc/snort/snort.conf -A full -l . --pcap-list="mx-2.pcap mx-3.pcap"`. What is the number of the generated alerts?
+
+    To solve this challenge, we can investigate the `mx-2.pcap` and `mx-3.pcap` files with Snort using the default configuration file:
+
+    ```bash
+    sudo snort -c /etc/snort/snort.conf -A full -l . --pcap-list="mx-2.pcap mx-3.pcap"
+    ```
+    Then, we can check the output summary for the number of generated alerts. The answer is `1020`.
+
+### Snort Rule Structure
+1. Use "task9.pcap". Write a rule to filter IP ID "35369" and run it against the given pcap file. What is the request name of the detected packet? You may use this command: "snort -c local.rules -A full -l . -r task9.pcap"
+
+    To solve this challenge, we can create a Snort rule in the `local.rules` file to filter for packets with IP ID "35369". The rule would look like this:
+
+    ```txt
+    alert icmp any any <> any any (msg: "1 question"; id:35369; sid: 1000002; rev:1;)
+    ```
+    Then, we can run Snort against the `task9.pcap` file using the command:
+
+    ```bash
+    snort -c local.rules -A full -l . -r task9.pcap
+    ```
+    After running the command, we can check the output for the request name of the detected packet (in the alert file). The answer is `TIMESTAMP REQUEST`.
+
+2. Clear the previous alert file and comment out the old rules. Create a rule to filter packets with Syn flag and run it against the given pcap file. What is the number of detected packets?
+
+    To solve this challenge, we can first clear the previous alert file and comment out the old rules in the `local.rules` file. Then, we can create a new rule to filter for packets with the SYN flag set. The rule would look like this:
+
+    ```txt
+    alert tcp any any <> any any (msg: "SYN TEST"; flags:S;  sid: 1000003; rev:1;)
+    ```
+    After adding the new rule, we can run Snort against the `task9.pcap` file using the command:
+
+    ```bash
+    snort -c local.rules -A full -l . -r task9.pcap
+    ```
+    After running the command, we can check the output for the number of detected packets with the SYN flag. The answer is `1`.
+
+3. Clear the previous alert file and comment out the old rules. Write a rule to filter packets with Push-Ack flags and run it against the given pcap file. What is the number of detected packets?
+
+    To solve this challenge, we can first clear the previous alert file and comment out the old rules in the `local.rules` file. Then, we can create a new rule to filter for packets with the Push and Ack flags set. The rule would look like this:
+
+    ```txt
+    alert tcp any any <> any any (msg: "PUSH-ACK TEST"; flags:PA; sid: 1000004; rev:1;)
+    ```
+    After adding the new rule, we can run Snort against the `task9.pcap` file using the command:
+
+    ```bash
+    snort -c local.rules -A full -l . -r task9.pcap
+    ```
+    After running the command, we can check the output for the number of detected packets with the Push and Ack flags. The answer is `216`.
+
+4. Clear the previous alert file and comment out the old rules. Create a rule to filter UDP packets with the same source and destination IP and run it against the given pcap file. What is the number of packets that show the same source and destination address?
+
+    To solve this challenge, we can first clear the previous alert file and comment out the old rules in the `local.rules` file. Then, we can create a new rule to filter for UDP packets where the source and destination IP addresses are the same. The rule would look like this:
+
+    ```txt
+    alert udp any any <> any any (msg: "SAME-IP TEST";  sameip; sid: 1000005; rev:1;)
+    ```
+    After adding the new rule, we can run Snort against the `task9.pcap` file using the command:
+
+    ```bash
+    snort -c local.rules -A full -l . -r task9.pcap
+    ```
+    After running the command, we can check the output for the number of packets that show the same source and destination address. The answer is `7`.
+
+5. Case Example - An analyst modified an existing rule successfully. Which rule option must the analyst change after the implementation?
+
+    The answer is `rev`. The `rev` (revision) option in a Snort rule indicates the version of the rule. When an analyst modifies an existing rule, they should increment the revision number to indicate that the rule has been updated. This helps in tracking changes and ensuring that the latest version of the rule is being used.
